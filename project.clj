@@ -9,7 +9,8 @@
                  [ring/ring-devel "1.3.2"]
                  [ring/ring-core "1.3.2"]
                  [javax.servlet/servlet-api "2.5"]
-                 [http-kit "2.1.18"]]
+                 [http-kit "2.1.18"]
+                 [me.shenfeng/mustache "1.1"]]
   :main ^:skip-aot snap-spot.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
