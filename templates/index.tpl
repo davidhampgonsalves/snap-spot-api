@@ -7,3 +7,6 @@
     this will not show, if hidden is false or empty list
   {{/ hidden }}
 </ul>
+<script>
+var exampleSocket = new WebSocket("ws://" + location.host);
+</script>
