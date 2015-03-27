@@ -8,17 +8,19 @@
     [compojure.core :only [defroutes GET POST DELETE ANY context]])
   (:require 
     [taoensso.carmine :as car :refer (wcar)]
+    [taoensso.timbre :as timbre]
     [me.shenfeng.mustache :as mustache]
     [snap-spot.controllers
       (position :as position)]))
 
+(timbre/set-level! :info)
 (mustache/deftemplate index-template (slurp "templates/index.tpl"))
 
 (defroutes all-routes
   (context "/position" [] 
     (GET "/update/:id" [] position/update)
     (GET "/subscribe/:id" [] position/subscribe))
-  (GET "/:id" [] (index-template {:title "TItLE"}))
+  (GET "/:id" [] (index-template {:title "SS"}))
   (route/not-found "<p>BORK!</p>")) ;; all other, return 404
 
 (defn in-dev? [args] true)

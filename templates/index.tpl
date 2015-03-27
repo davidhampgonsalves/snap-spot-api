@@ -8,5 +8,9 @@
   {{/ hidden }}
 </ul>
 <script>
-var exampleSocket = new WebSocket("ws://" + location.host);
+var tripId = window.location.pathname.substr(1);
+var positionSocket = new WebSocket("ws://localhost:9000/position/subscribe/" + tripId);
+positionSocket.onmessage = function (event) {
+  console.log(event.data);
+}
 </script>
