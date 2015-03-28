@@ -11,7 +11,8 @@
     [taoensso.timbre :as timbre]
     [me.shenfeng.mustache :as mustache]
     [snap-spot.controllers
-      (position :as position)]))
+      (position :as position)
+      (trip :as trip)]))
 
 (timbre/set-level! :info)
 (mustache/deftemplate index-template (slurp "templates/index.tpl"))
@@ -20,6 +21,8 @@
   (context "/position" [] 
     (GET "/update/:id" [] position/update)
     (GET "/subscribe/:id" [] position/subscribe))
+  (context "/trip" []
+    (GET "/create/:id" [] trip/create))
   (GET "/:id" [] (index-template {:title "SS"}))
   (route/not-found "<p>BORK!</p>")) ;; all other, return 404
 

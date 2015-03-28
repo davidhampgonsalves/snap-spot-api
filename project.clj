@@ -12,6 +12,8 @@
                  [javax.servlet/servlet-api "2.5"]
                  [http-kit "2.1.18"]
                  [org.clojure/data.json "0.2.6"]
+                 [bouncer "0.3.2"]
+                 [clj-time "0.9.0"]
                  [me.shenfeng/mustache "1.1"]]
   :main ^:skip-aot snap-spot.core
   :target-path "target/%s"
