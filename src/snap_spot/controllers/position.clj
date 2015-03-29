@@ -18,7 +18,6 @@
 
 (timbre/refer-timbre)
 
-
 (defn send-position [channel position]
   "send postion to websocket channel"
   (send! channel (json/write-str (zipmap [:lat :lon :instant] position))))
@@ -27,6 +26,17 @@
   "send all past positions to websocket channel"
   (def positions (position/fetch-positions params))
   (doseq [p (reverse positions)] (send-position channel p)))
+
+(defn position-from-params [params]
+  (def attrs [:lat :lon :instant])
+  (-> params 
+    (select-keys attrs)
+    (helper/values->numbers attrs)))
+
+(defn handle-new-position [trip position]
+  "push new position to subscribed channels and persist to redis"
+  (redis/wcar* (car/publish (:id trip) position))
+  (position/add trip position))
 
 (defn subscribe-to-redis [channel trip-id]
   "subscribe to redis sub/pub for a trip and push to websocket channel"
@@ -46,27 +56,18 @@
     (subscribe-to-redis channel (:id params))
     (send-past-positions channel params)))
 
-(defn position-from-params [params]
-  (select-keys [:lat :lon :instant] params))
-
-(defn handle-new-position [trip position]
-  "push new position to subscribed channels and persist to redis"
-  (redis/wcar* (car/publish (:id trip) position))
-  (position/add trip position))
-
-(def update-validations 
-  {:id [v/required v/number]
-   :secret [v/required v/number]
-   :lat [v/required v/number]
-   :lon [v/required v/number]
-   :instant [v/required v/number]})
+(def update-param-validations {:id [v/required]
+                               :secret [v/required]
+                               :lat [v/required]
+                               :lon [v/required]
+                               :instant [v/required]})
 
 (defn update [req] 
   "update position for trip"
   (let [p (:params req)
         trip (trip/fetch (:id p))
         position (position-from-params p)
-        errors (helper/validate-all [[p update-validations] 
+        errors (helper/validate-all [[p update-param-validations] 
                                      [trip trip/validations] 
                                      [position position/validations]])]
     (if errors

@@ -10,6 +10,7 @@
     [clojure.data.json :as json]
     [clj-time.core :as t]
     [me.shenfeng.mustache :as mustache]
+    [snap-spot.helper :as helper]
     [snap-spot.models 
      (trip :as trip)]))
 
@@ -19,16 +20,16 @@
   "build a trip map from request params"
   (def duration (Integer/parseInt (:duration p)))
   {:id (:id p) 
-    :duration duration 
-    :secret (str (java.util.UUID/randomUUID))
-    :start (t/now)})
+   :duration duration 
+   :secret (str (java.util.UUID/randomUUID))
+   :start (t/now)})
 
+(comment "TODO: validate trip params")
 (defn create [req]
   "creates a new trip and returns the secret which is required for updating."
   (let [trip (trip-from-params (:params req))
         errors (trip/validate trip)]
     (if (nil? errors)
-      (do
-        (trip/persist trip)
+      (do (trip/persist trip)
         (json/write-str {:secret (:secret trip)}))
-      (str "BORK!" errors))))
+      (helper/error-response errors))))
