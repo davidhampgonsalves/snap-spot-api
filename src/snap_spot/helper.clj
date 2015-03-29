@@ -1,0 +1,27 @@
+(ns snap-spot.helper
+  (:require 
+    [bouncer.core :as b]
+    [bouncer.validators :as v]
+    [clj-time.core :as t]
+    [clojure.data.json :as json]))
+
+(defn error-response [error] 
+  "create json error message"
+  (json/write-str {:error error}))
+
+(defn str->number [v]
+  "convert string to "
+  (try (bigdec v) (catch Exception e v)))
+
+(defn values->numbers [m keys]
+  (reduce (fn [r [k v]] (assoc r k (str->number v))) {} m))
+
+(defn validate-all [obj-validator-pairs]
+  "call validate on each object/validator rule pairs sequentially and return first error set"
+  (loop [o-v-pairs obj-validator-pairs]
+    (let [o-v-pair (first o-v-pairs)
+          errors (first (apply b/validate o-v-pair))]
+      (if errors
+        errors
+        (if (not-empty o-v-pairs)
+          (recur (rest o-v-pairs)))))))
