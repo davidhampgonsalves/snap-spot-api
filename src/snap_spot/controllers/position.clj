@@ -7,12 +7,17 @@
     [snap-spot.redis :as redis]
     [taoensso.carmine :as car :refer (wcar)]
     [taoensso.timbre :as timbre]
+    [bouncer.core :as b]
+    [bouncer.validators :as v]
     [clojure.data.json :as json]
-    [me.shenfeng.mustache :as mustache]))
+    [me.shenfeng.mustache :as mustache]
+    [snap-spot.helper :as helper]
+    [snap-spot.models 
+     (position :as position)
+     (trip :as trip)]))
 
 (timbre/refer-timbre)
 
-(defn get-position-key [params] (str (:id params) "-positions"))
 
 (defn send-position [channel position]
   "send postion to websocket channel"
@@ -20,7 +25,7 @@
 
 (defn send-past-positions [channel params]
   "send all past positions to websocket channel"
-  (def positions (redis/wcar* (car/lrange (get-position-key params) 0 -1)))
+  (def positions (position/fetch-positions params))
   (doseq [p (reverse positions)] (send-position channel p)))
 
 (defn subscribe-to-redis [channel trip-id]
@@ -41,13 +46,32 @@
     (subscribe-to-redis channel (:id params))
     (send-past-positions channel params)))
 
+(defn position-from-params [params]
+  (select-keys [:lat :lon :instant] params))
+
+(defn handle-new-position [trip position]
+  "push new position to subscribed channels and persist to redis"
+  (redis/wcar* (car/publish (:id trip) position))
+  (position/add trip position))
+
+(def update-validations 
+  {:id [v/required v/number]
+   :secret [v/required v/number]
+   :lat [v/required v/number]
+   :lon [v/required v/number]
+   :instant [v/required v/number]})
+
 (defn update [req] 
   "update position for trip"
-  (def params (:params req))
-  (redis/wcar* 
-    (if (car/get (:id params)) 
-      (do
-        (car/publish (:id params) (map params [:lat :lon :instant]))
-        (car/lpush (get-position-key params) (select-keys params [:lat :lon :instant])))
-      "BORK!(trip not found)"))
-  "Position updated.")
+  (let [p (:params req)
+        trip (trip/fetch (:id p))
+        position (position-from-params p)
+        errors (helper/validate-all [[p update-validations] 
+                                     [trip trip/validations] 
+                                     [position position/validations]])]
+    (if errors
+      (helper/error-response errors) 
+      (if (= (:secret p) (:secret trip "")) 
+        (do (handle-new-position trip position)
+            "Position updated")
+        (helper/error-response "invalid secret")))))
