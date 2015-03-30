@@ -20,7 +20,7 @@
 
 (defn send-position [channel position]
   "send postion to websocket channel"
-  (send! channel (json/write-str (zipmap [:lat :lon :instant] position))))
+  (send! channel (json/write-str position)))
 
 (defn send-past-positions [channel params]
   "send all past positions to websocket channel"
@@ -62,17 +62,19 @@
                                :lon [v/required]
                                :instant [v/required]})
 
-(defn update [req] 
+(comment "need to enforce instant so that the positions stay ordered")
+(defn add [req] 
   "update position for trip"
   (let [p (:params req)
-        trip (trip/fetch (:id p))
         position (position-from-params p)
         errors (helper/validate-all [[p update-param-validations] 
-                                     [trip trip/validations] 
                                      [position position/validations]])]
     (if errors
       (helper/error-response errors) 
-      (if (= (:secret p) (:secret trip "")) 
-        (do (handle-new-position trip position)
-            "Position updated")
-        (helper/error-response "invalid secret")))))
+      (let [trip (trip/fetch (:id p))]
+        (if-not trip
+          (helper/error-response "trip not found")
+          (if (= (:secret p) (:secret trip "")) 
+            (do (handle-new-position trip position)
+                (helper/success-response "position added"))
+            (helper/error-response "invalid secret")))))))

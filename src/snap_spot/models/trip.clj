@@ -15,7 +15,12 @@
   (redis/wcar* (car/get id)))
 
 (defn persist [trip]
+  "write trip redis"
   (redis/wcar* (car/set (:id trip) trip)))
+
+(defn update [trip]
+  (redis/wcar* (car/set (:id trip) trip)))
+  
 
 (defn active? [trip] 
   "checks if a trip is still active"
@@ -26,7 +31,7 @@
                   :duration [v/required v/number v/positive]
                   :start [v/required]})
 
-(comment "TODO: validate trip duration and start time")
+(comment "TODO: validate trip duration and start time(custom validator for datetime which should be used on position/instant)")
 (defn validate [trip]
   "checks if a trip has all necessry attributes and is still active"
   (first (b/validate trip validations)))

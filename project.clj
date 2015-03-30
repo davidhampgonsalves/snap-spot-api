@@ -14,6 +14,7 @@
                  [org.clojure/data.json "0.2.6"]
                  [bouncer "0.3.2"]
                  [clj-time "0.9.0"]
+                 [ring/ring-mock "0.2.0"]
                  [me.shenfeng/mustache "1.1"]]
   :main ^:skip-aot snap-spot.core
   :target-path "target/%s"

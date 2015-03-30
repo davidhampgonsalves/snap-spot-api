@@ -9,6 +9,13 @@
   "create json error message"
   (json/write-str {:error error}))
 
+(defn success-response [msg] 
+  "create json success message"
+  (json/write-str {:success msg}))
+
+(defn generate-uuid []
+  (str (java.util.UUID/randomUUID)))
+
 (defn str->number [v]
   "convert string to "
   (try (bigdec v) (catch Exception e v)))

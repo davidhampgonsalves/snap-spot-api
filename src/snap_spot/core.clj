@@ -19,10 +19,11 @@
 
 (defroutes all-routes
   (context "/position" [] 
-    (GET "/update/:id" [] position/update)
+    (GET "/add/:id" [] position/add)
     (GET "/subscribe/:id" [] position/subscribe))
   (context "/trip" []
-    (GET "/create/:id" [] trip/create))
+    (GET "/create/:id" [] trip/create)
+    (GET "/update/:id" [] trip/update))
   (GET "/:id" [] (index-template {:title "SS"}))
   (route/not-found "<p>BORK!</p>")) ;; all other, return 404
 
