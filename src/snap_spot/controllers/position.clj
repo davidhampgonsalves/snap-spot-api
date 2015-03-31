@@ -25,7 +25,7 @@
 (defn send-past-positions [channel params]
   "send all past positions to websocket channel"
   (def positions (position/fetch-positions params))
-  (doseq [p (reverse positions)] (send-position channel p)))
+  (doseq [p (sort-by :instant > positions)] (send-position channel p)))
 
 (defn position-from-params [params]
   (def attrs [:lat :lon :instant])
@@ -62,7 +62,6 @@
                                :lon [v/required]
                                :instant [v/required]})
 
-(comment "need to enforce instant so that the positions stay ordered")
 (defn add [req] 
   "update position for trip"
   (let [p (:params req)
