@@ -25,7 +25,7 @@
    :secret (helper/generate-uuid) 
    :start (t/now)})
 
-(comment "TODO: validate trip params")
+(def create-param-validations [:id :secret :start :duration]) 
 (defn create [req]
   "creates a new trip and returns the secret which is required for updating."
   (let [trip (trip-from-params (:params req))
@@ -35,9 +35,8 @@
         (json/write-str {:secret (:secret trip)}))
       (helper/error-response errors))))
 
-(def update-param-validations {:id [v/required]
-                               :secret [v/required]
-                               :duration [v/required]})
+(def update-param-validations [:id :secret :duration])
+
 (comment "enforce duration range")
 (defn update [req]
   "update trip duration(the only updatable attr)"

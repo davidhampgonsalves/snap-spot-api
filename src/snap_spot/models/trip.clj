@@ -15,10 +15,11 @@
   (redis/wcar* (car/get id)))
 
 (defn persist [trip]
-  "write trip redis"
+  "write trip to redis"
   (redis/wcar* (car/set (:id trip) trip)))
 
 (defn update [trip]
+  "update a trip based on its id"
   (redis/wcar* (car/set (:id trip) trip)))
   
 

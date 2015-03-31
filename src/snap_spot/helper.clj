@@ -23,6 +23,9 @@
 (defn values->numbers [m keys]
   (reduce (fn [r [k v]] (assoc r k (str->number v))) {} m))
 
+(defn generate-required-validations [attrs]
+  (reduce #(assoc %1 %2 [v/required]) {} attrs))
+
 (defn validate-all [obj-validator-pairs]
   "call validate on each object/validator rule pairs sequentially and return first error set"
   (loop [o-v-pairs obj-validator-pairs]

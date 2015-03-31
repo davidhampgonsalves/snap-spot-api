@@ -9,16 +9,18 @@
             [clojure.data.json :as json]))
 
 (defn create-trip []
-  (def trip-resp (trip/create {:params {:id (helper/generate-uuid) :duration "30"}}))
-  (json/read-str trip-resp))
+  (let[trip {:id (helper/generate-uuid) :duration "30"}
+       trip-resp (trip/create {:params trip})]
+       (assoc trip :secret (get (json/read-str trip-resp) "secret"))))
 
 (deftest test-add
   (testing "add position"
     (def trip (create-trip))
+    (println trip)
     (def resp (position/add {:params {:id (:id trip) 
                                        :secret (:secret trip) 
                                        :lat "22" 
                                        :lon "24" 
                                        :instant "12345"}}))
-    (test (contains? (json/read-str resp) :success))))
+    (test (is (contains? (json/read-str resp) "success")))))
 

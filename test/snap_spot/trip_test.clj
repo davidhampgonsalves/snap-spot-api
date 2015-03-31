@@ -8,10 +8,25 @@
             [clojure.data.json :as json]))
 
 (deftest test-create
-  (testing "trip/create validation."
+  (testing "trip/create test"
     (def trip (json/read-str (trip/create {:params {:id 5 :duration 30}})))
-    (contains? trip :secret)))
+    (is (contains? trip "secret"))))
+
+(deftest test-create-bad-duration
+  (testing "trip/create error test"
+    (def error (json/read-str (trip/create {:params {:id 5 :duration -30}})))
+    (is (contains? error "error"))))
+
+(deftest test-create-no-duration
+  (testing "trip/create no duration error test"
+    (def error (json/read-str (trip/create {:params {:id 5}})))
+    (is (contains? error "error"))))
 
 (deftest test-from-params
   (testing "trip-from-params"
-    (= 1 (:duration (trip/trip-from-params {:id "1" :duration "1"})))))
+    (is (= 1M (:duration (trip/trip-from-params {:id "1" :duration "1"}))))))
+
+(deftest test-update
+  (testing "trip/update duration error test"
+    (def error (json/read-str (trip/create {:params {:id 5}})))
+    (is (contains? error "error"))))

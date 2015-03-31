@@ -28,6 +28,7 @@
   (doseq [p (sort-by :instant > positions)] (send-position channel p)))
 
 (defn position-from-params [params]
+  "turn url params into a position"
   (def attrs [:lat :lon :instant])
   (-> params 
     (select-keys attrs)
@@ -56,17 +57,12 @@
     (subscribe-to-redis channel (:id params))
     (send-past-positions channel params)))
 
-(def update-param-validations {:id [v/required]
-                               :secret [v/required]
-                               :lat [v/required]
-                               :lon [v/required]
-                               :instant [v/required]})
-
+(def add-param-validations (helper/generate-required-validations [:id :secret :lat :lon :instant])) 
 (defn add [req] 
   "update position for trip"
   (let [p (:params req)
         position (position-from-params p)
-        errors (helper/validate-all [[p update-param-validations] 
+        errors (helper/validate-all [[p add-param-validations] 
                                      [position position/validations]])]
     (if errors
       (helper/error-response errors) 
