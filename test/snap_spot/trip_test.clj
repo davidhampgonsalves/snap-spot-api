@@ -22,9 +22,9 @@
     (def error (json/read-str (trip/create {:params {:id 5}})))
     (is (contains? error "error"))))
 
-(deftest test-from-params
-  (testing "trip-from-params"
-    (is (= 1M (:duration (trip/trip-from-params {:id "1" :duration "1"}))))))
+(deftest test-params->trip
+  (testing "params->trip"
+    (is (= 1M (:duration (trip/params->trip {:id "1" :duration "1"}))))))
 
 (deftest test-update
   (testing "trip/update duration error test"

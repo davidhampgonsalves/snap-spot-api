@@ -18,7 +18,7 @@
 
 (timbre/refer-timbre)
 
-(defn trip-from-params [p]
+(defn params->trip [p]
   "build a trip map from request params"
   {:id (:id p) 
    :duration (helper/str->number (:duration p)) 
@@ -28,7 +28,7 @@
 (def create-param-validations [:id :secret :start :duration]) 
 (defn create [req]
   "creates a new trip and returns the secret which is required for updating."
-  (let [trip (trip-from-params (:params req))
+  (let [trip (params->trip (:params req))
         errors (trip/validate trip)]
     (if (nil? errors)
       (do (trip/persist trip)

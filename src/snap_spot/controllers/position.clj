@@ -27,7 +27,7 @@
   (def positions (position/fetch-positions params))
   (doseq [p (sort-by :instant > positions)] (send-position channel p)))
 
-(defn position-from-params [params]
+(defn params->position [params]
   "turn url params into a position"
   (def attrs [:lat :lon :instant])
   (-> params 
@@ -61,7 +61,7 @@
 (defn add [req] 
   "update position for trip"
   (let [p (:params req)
-        position (position-from-params p)
+        position (params->position p)
         errors (helper/validate-all [[p add-param-validations] 
                                      [position position/validations]])]
     (if errors
