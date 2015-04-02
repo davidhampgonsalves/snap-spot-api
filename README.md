@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # snap-spot
 
 FIXME: description
@@ -34,3 +35,6 @@ Copyright © 2015 FIXME
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
+=======
+# snap-spot-api
+>>>>>>> d1a2e6cd9e11c050ebd80064911827b1534356e1
