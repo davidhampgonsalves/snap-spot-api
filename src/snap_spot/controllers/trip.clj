@@ -37,7 +37,8 @@
 
 (def update-param-validations [:id :secret :duration])
 
-(comment "enforce duration range")
+(comment "TODO: enforce duration range")
+(comment "TODO: enforce matching secret")
 (defn update [req]
   "update trip duration(the only updatable attr)"
    (let [p (:params req)

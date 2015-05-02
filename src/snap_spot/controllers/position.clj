@@ -24,20 +24,25 @@
 
 (defn send-past-positions [channel params]
   "send all past positions to websocket channel"
-  (def positions (position/fetch-positions params))
+  (def positions (position/fetch-all params))
   (doseq [p (sort-by :instant > positions)] (send-position channel p)))
 
 (defn params->position [params]
   "turn url params into a position"
-  (def attrs [:lat :lon :instant])
+  (def attrs [:lat :lon :order])
   (-> params 
     (select-keys attrs)
     (helper/values->numbers attrs)))
 
 (defn handle-new-position [trip position]
-  "push new position to subscribed channels and persist to redis"
-  (redis/wcar* (car/publish (:id trip) position))
-  (position/add trip position))
+  "push new position to subscribed channels and persist to redis if last update was older then a second ago"
+  (def last-updated (position/last-updated trip))
+  (def seconds-between-updates (.until last-updated (java.time.Instant/now) (java.time.temporal.ChronoUnit/SECONDS)))
+  (if (> seconds-between-updates 1) 
+    (do
+      (redis/wcar* (car/publish (:id trip) position))
+      (position/add trip position))
+    (info "ignoring new position b/c the elapsed time between positions is only " seconds-between-updates)))
 
 (defn subscribe-to-redis [channel trip-id]
   "subscribe to redis sub/pub for a trip and push to websocket channel"
@@ -57,7 +62,7 @@
     (subscribe-to-redis channel (:id params))
     (send-past-positions channel params)))
 
-(def add-param-validations (helper/generate-required-validations [:id :secret :lat :lon :instant])) 
+(def add-param-validations (helper/generate-required-validations [:id :secret :lat :lon :order])) 
 (defn add [req] 
   "update position for trip"
   (let [p (:params req)

@@ -11,17 +11,24 @@
 (timbre/refer-timbre)
 
 (defn trip-positions-key [trip] (str (:id trip) "-positions"))
+(defn trip-last-updated-key [trip] (str (:id trip) "-last-updated"))
 
-(defn fetch-positions [trip]
+(defn last-updated [trip] 
+  (or 
+    (redis/wcar* (car/get (trip-last-updated-key trip)))
+    (java.time.Instant/EPOCH)))
+
+(defn fetch-all [trip]
   (redis/wcar* (car/lrange (trip-positions-key trip) 0 -1)))
 
 (def validations {:lat [v/required v/number] 
                   :lon [v/required v/number]
-                  :instant [v/required]})
+                  :order [v/required]})
 
 (defn validate [position]
   (first (b/validate position validations)))
 
 (defn add [trip position]
-  (redis/wcar* (car/lpush (trip-positions-key trip) position)))
+  (redis/wcar* (car/lpush (trip-positions-key trip) position))
+  (redis/wcar* (car/set (trip-last-updated-key trip) (java.time.Instant/now))))
 

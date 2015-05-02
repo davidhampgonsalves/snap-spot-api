@@ -15,11 +15,11 @@
 
 (deftest test-params->position
   (testing "create position from params"
-    (def position (position/params->position {:lat "1.1" :lon "2" :instant "1213123"}))
+    (def position (position/params->position {:lat "1.1" :lon "2" :order "1"}))
     (is (and 
           (= (:lat position) 1.1M)
           (= (:lon position) 2M)
-          (= (:instant position) 1213123M)))))
+          (= (:order position) 1M)))))
 
 (deftest test-add
   (testing "add position"
@@ -28,7 +28,7 @@
                                        :secret (:secret trip) 
                                        :lat "22" 
                                        :lon "24" 
-                                       :instant "12345"}}))
+                                       :order "1"}}))
     (test (is (contains? (json/read-str resp) "success")))))
 
 
@@ -40,5 +40,5 @@
                                        :secret (:secret trip) 
                                        :lat "22a" 
                                        :lon "24" 
-                                       :instant "12345"}}))
+                                       :order "1"}}))
     (test (is (contains? (json/read-str resp) "error")))))
