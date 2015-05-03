@@ -29,6 +29,7 @@
   (first (b/validate position validations)))
 
 (defn add [trip position]
-  (redis/wcar* (car/lpush (trip-positions-key trip) position))
-  (redis/wcar* (car/set (trip-last-updated-key trip) (java.time.Instant/now))))
+  (redis/wcar* 
+    (car/lpush (trip-positions-key trip) position)
+    (car/set (trip-last-updated-key trip) (java.time.Instant/now))))
 

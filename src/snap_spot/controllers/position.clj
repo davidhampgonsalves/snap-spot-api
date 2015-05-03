@@ -74,7 +74,7 @@
       (let [trip (trip/fetch (:id p))]
         (if-not trip
           (helper/error-response "trip not found")
-          (if (= (:secret p) (:secret trip "")) 
+          (if (= (:secret p) (:secret trip)) 
             (do (handle-new-position trip position)
                 (helper/success-response "position added"))
             (helper/error-response "invalid secret")))))))

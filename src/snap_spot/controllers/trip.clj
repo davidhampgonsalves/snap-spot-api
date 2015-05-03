@@ -25,7 +25,6 @@
    :secret (helper/generate-uuid) 
    :start (t/now)})
 
-(def create-param-validations [:id :secret :start :duration]) 
 (defn create [req]
   "creates a new trip and returns the secret which is required for updating."
   (let [trip (params->trip (:params req))
@@ -35,16 +34,25 @@
         (json/write-str {:secret (:secret trip)}))
       (helper/error-response errors))))
 
-(def update-param-validations [:id :secret :duration])
+(v/defvalidator duration-range-validator
+  {:default-message-format "duration must be between 0-120"}
+  [duration]
+  (and (>= duration 0) (<= duration 120)))
 
-(comment "TODO: enforce duration range")
-(comment "TODO: enforce matching secret")
+(def update-param-validations {:id [v/required] 
+                               :secret [v/required]
+                               :duration [v/required v/number duration-range-validator]})
+
 (defn update [req]
   "update trip duration(the only updatable attr)"
    (let [p (:params req)
-        errors (b/validate p update-param-validations)]
-     (if-let [trip (trip/fetch (:id p))]
-       (do
-         (trip/update (assoc trip :duration (:duration p)))
-         (helper/success-response "trip updated"))         
-       (helper/error-response "trip not found"))))
+        errors (first (b/validate p update-param-validations))]
+     (if (nil? errors)
+       (if-let [trip (trip/fetch (:id p))]
+         (if (= (:secret trip) (:secret p))
+           (do
+             (trip/update (assoc trip :duration (:duration p)))
+             (helper/success-response "trip updated"))
+           (helper/error-response "invalid secret")) 
+         (helper/error-response "trip not found"))
+       (helper/error-response errors))))

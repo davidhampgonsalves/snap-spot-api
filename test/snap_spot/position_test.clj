@@ -11,7 +11,7 @@
 (defn create-trip []
   (let[trip {:id (helper/generate-uuid) :duration "30"}
        trip-resp (trip/create {:params trip})]
-       (assoc trip :secret (get (json/read-str trip-resp) "secret"))))
+       (assoc trip :secret (:secret (json/read-str trip-resp :key-fn keyword)))))
 
 (deftest test-params->position
   (testing "create position from params"
@@ -31,14 +31,29 @@
                                        :order "1"}}))
     (test (is (contains? (json/read-str resp) "success")))))
 
-
 (deftest test-add-validation
   (testing "add position validation"
     (def trip (create-trip))
-    (println trip)
-    (def resp (position/add {:params {:id (:id trip) 
-                                       :secret (:secret trip) 
-                                       :lat "22a" 
-                                       :lon "24" 
-                                       :order "1"}}))
-    (test (is (contains? (json/read-str resp) "error")))))
+    (testing "- lat is a number"
+      (let [resp (position/add {:params {:id (:id trip) 
+                               :secret (:secret trip) 
+                               :lat "22a" 
+                               :lon "24" 
+                               :order "1"}})]
+        (is (contains? (json/read-str resp) "error"))))
+    
+    (testing "- secret validation"
+      (let [resp (position/add {:params {:id (:id trip) 
+                               :secret "abc" 
+                               :lat "22" 
+                               :lon "24" 
+                               :order "1"}})]
+        (is (contains? (json/read-str resp) "error"))))
+
+    (testing "- success"
+      (let [resp (position/add {:params {:id (:id trip) 
+                               :secret (:secret trip) 
+                               :lat "22" 
+                               :lon "24" 
+                               :order "1"}})]
+        (is (contains? (json/read-str resp) "success"))))))
