@@ -13,6 +13,9 @@
   "create json success message"
   (json/write-str {:success msg}))
 
+(defn throw-exception [msg]
+  (throw (Exception. msg)))
+
 (defn generate-uuid []
   (str (java.util.UUID/randomUUID)))
 

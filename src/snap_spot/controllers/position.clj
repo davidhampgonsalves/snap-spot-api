@@ -34,16 +34,6 @@
     (select-keys attrs)
     (helper/values->numbers attrs)))
 
-(defn handle-new-position [trip position]
-  "push new position to subscribed channels and persist to redis if last update was older then a second ago"
-  (def last-updated (position/last-updated trip))
-  (def seconds-between-updates (.until last-updated (java.time.Instant/now) (java.time.temporal.ChronoUnit/SECONDS)))
-  (if (> seconds-between-updates 1) 
-    (do
-      (redis/wcar* (car/publish (:id trip) position))
-      (position/add trip position))
-    (info "ignoring new position b/c the elapsed time between positions is only " seconds-between-updates)))
-
 (defn subscribe-to-redis [channel trip-id]
   "subscribe to redis sub/pub for a trip and push to websocket channel"
   (def position-pubsub-listener
@@ -62,9 +52,16 @@
     (subscribe-to-redis channel (:id params))
     (send-past-positions channel params)))
 
+(defn save-new-position [trip position]
+  (redis/wcar*
+    (if (> (trip/seconds-since-update trip) 1)
+      (position/add trip position)
+      (info "position not writen to db since last update was too recent"))
+    (car/publish (:id trip) position)))
+
 (def add-param-validations (helper/generate-required-validations [:id :secret :lat :lon :order])) 
 (defn add [req] 
-  "update position for trip"
+  "add position to a trip"
   (let [p (:params req)
         position (params->position p)
         errors (helper/validate-all [[p add-param-validations] 
@@ -72,9 +69,8 @@
     (if errors
       (helper/error-response errors) 
       (let [trip (trip/fetch (:id p))]
-        (if-not trip
-          (helper/error-response "trip not found")
-          (if (= (:secret p) (:secret trip)) 
-            (do (handle-new-position trip position)
-                (helper/success-response "position added"))
-            (helper/error-response "invalid secret")))))))
+        (try
+          (trip/valid-or-throw p)
+          (save-new-position trip position)
+          (helper/success-response "position added")
+          (catch Exception e (helper/error-response (.getMessage e))))))))
