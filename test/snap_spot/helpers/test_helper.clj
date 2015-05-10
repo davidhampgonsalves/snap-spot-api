@@ -1,4 +1,4 @@
-(ns snap-spot.test-helper
+(ns snap-spot.helpers.test-helper
   (:require [snap-spot.redis :as redis]
             [taoensso.carmine :as car :refer (wcar)]))
 

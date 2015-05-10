@@ -36,24 +36,24 @@
     (def trip (create-trip))
     (testing "- lat is a number"
       (let [resp (position/add {:params {:id (:id trip) 
-                               :secret (:secret trip) 
-                               :lat "22a" 
-                               :lon "24" 
-                               :order "1"}})]
+                                         :secret (:secret trip) 
+                                         :lat "22a" 
+                                         :lon "24" 
+                                         :order "1"}})]
         (is (contains? (json/read-str resp) "error"))))
     
     (testing "- secret validation"
       (let [resp (position/add {:params {:id (:id trip) 
-                               :secret "abc" 
-                               :lat "22" 
-                               :lon "24" 
-                               :order "1"}})]
+                                         :secret "abc" 
+                                         :lat "22" 
+                                         :lon "24" 
+                                         :order "1"}})]
         (is (contains? (json/read-str resp) "error"))))
 
     (testing "- success"
       (let [resp (position/add {:params {:id (:id trip) 
-                               :secret (:secret trip) 
-                               :lat "22" 
-                               :lon "24" 
-                               :order "1"}})]
+                                         :secret (:secret trip) 
+                                         :lat "22" 
+                                         :lon "24" 
+                                         :order "1"}})]
         (is (contains? (json/read-str resp) "success"))))))

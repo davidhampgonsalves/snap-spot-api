@@ -1,7 +1,7 @@
 (ns snap-spot.task-test
   (:require [clojure.test :refer :all]
             [snap-spot.core :refer :all]
-            [snap-spot.test-helper :as test-helper]
+            [snap-spot.helpers.test-helper :as test-helper]
             [ring.mock.request :as mock]
             [snap-spot.controllers.trip :as trip-controller]
             [snap-spot.models
@@ -24,4 +24,3 @@
 
     (testing "was expired trip deleted"
       (is (nil? (trip/fetch 4))))))
-

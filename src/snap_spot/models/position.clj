@@ -17,7 +17,7 @@
 (defn last-updated [trip] 
   (or 
     (redis/wcar* (car/get (redis-last-updated-key trip)))
-    (java.time.Instant/EPOCH)))
+    (t/epoch)))
 
 (defn fetch-all [trip]
   (redis/wcar* (car/lrange (redis-key trip) 0 -1)))
@@ -32,5 +32,5 @@
 (defn add [trip position]
   (redis/wcar*
     (car/lpush (redis-key trip) position)
-    (car/set (redis-last-updated-key trip) (java.time.Instant/now))))
+    (car/set (redis-last-updated-key trip) (t/now))))
 

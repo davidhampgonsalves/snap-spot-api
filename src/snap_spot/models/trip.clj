@@ -42,22 +42,25 @@
 (defn seconds-since-update [trip]
   "push new position to subscribed channels and persist to redis if last update was older then a second ago"
   (let [last-updated (position/last-updated trip)]
-    (.until last-updated (java.time.Instant/now) (java.time.temporal.ChronoUnit/SECONDS))))
+    (t/in-seconds (t/interval last-updated (t/now)))))
 
-(defn has-valid-secret? [trip]
-  (if-let [existing-trip (fetch (:id trip))]
+(defn has-valid-secret? [trip existing-trip]
+  (if-not (nil? existing-trip)
     (= (:secret existing-trip) (:secret trip))
     false))
 
 (defn valid-or-throw [trip]
   "throw error if trip is invalid"
   (if (nil? trip) 
-    (helper/throw-exception "trip is null"))
-  (if-not (has-valid-secret? trip) 
-    (helper/throw-exception "invalid secret."))
-  (comment "start might not be set on updates")
-  (if-not (or (nil? (:start trip)) (active? trip))
-    (helper/throw-exception "trip does not exist.")))
+    (helper/throw-exception "trip is nil."))
+  (let [existing-trip (fetch (:id trip))]
+    (if (nil? existing-trip)
+      (helper/throw-exception "trip does not exist."))
+    (if-not (has-valid-secret? trip existing-trip) 
+      (helper/throw-exception "invalid secret."))
+    (comment "start might not be set on updates")
+    (if-not (or (nil? (:start trip)) (active? trip))
+      (helper/throw-exception "trip does not exist."))))
 
 (comment "logically this should be in position but it causes a cyclical dependancy")
 (defn redis-position-key [trip] (str (:id trip) "-positions"))
