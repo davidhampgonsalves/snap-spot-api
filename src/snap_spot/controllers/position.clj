@@ -24,20 +24,15 @@
 
 (defn send-past-positions [channel params]
   "send all past positions to websocket channel"
-  (def positions (position/fetch-positions params))
+  (def positions (position/fetch-all params))
   (doseq [p (sort-by :instant > positions)] (send-position channel p)))
 
 (defn params->position [params]
   "turn url params into a position"
-  (def attrs [:lat :lon :instant])
+  (def attrs [:lat :lon :order])
   (-> params 
     (select-keys attrs)
     (helper/values->numbers attrs)))
-
-(defn handle-new-position [trip position]
-  "push new position to subscribed channels and persist to redis"
-  (redis/wcar* (car/publish (:id trip) position))
-  (position/add trip position))
 
 (defn subscribe-to-redis [channel trip-id]
   "subscribe to redis sub/pub for a trip and push to websocket channel"
@@ -57,9 +52,16 @@
     (subscribe-to-redis channel (:id params))
     (send-past-positions channel params)))
 
-(def add-param-validations (helper/generate-required-validations [:id :secret :lat :lon :instant])) 
+(defn save-new-position [trip position]
+  (redis/wcar*
+    (if (> (trip/seconds-since-update trip) 1)
+      (position/add trip position)
+      (info "position not writen to db since last update was too recent"))
+    (car/publish (:id trip) position)))
+
+(def add-param-validations (helper/generate-required-validations [:id :secret :lat :lon :order])) 
 (defn add [req] 
-  "update position for trip"
+  "add position to a trip"
   (let [p (:params req)
         position (params->position p)
         errors (helper/validate-all [[p add-param-validations] 
@@ -67,9 +69,8 @@
     (if errors
       (helper/error-response errors) 
       (let [trip (trip/fetch (:id p))]
-        (if-not trip
-          (helper/error-response "trip not found")
-          (if (= (:secret p) (:secret trip "")) 
-            (do (handle-new-position trip position)
-                (helper/success-response "position added"))
-            (helper/error-response "invalid secret")))))))
+        (try
+          (trip/valid-or-throw p)
+          (save-new-position trip position)
+          (helper/success-response "position added")
+          (catch Exception e (helper/error-response (.getMessage e))))))))

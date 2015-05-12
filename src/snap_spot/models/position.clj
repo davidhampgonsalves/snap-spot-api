@@ -1,6 +1,7 @@
 (ns snap-spot.models.position
   (:require 
     [snap-spot.redis :as redis]
+    [snap-spot.helper :as helper]
     [taoensso.carmine :as car :refer (wcar)]
     [taoensso.timbre :as timbre]
     [bouncer.core :as b]
@@ -10,18 +11,26 @@
 
 (timbre/refer-timbre)
 
-(defn trip-positions-key [trip] (str (:id trip) "-positions"))
+(defn redis-key [trip] (str (:id trip) "-positions"))
+(defn redis-last-updated-key [trip] (str (:id trip) "-last-updated"))
 
-(defn fetch-positions [trip]
-  (redis/wcar* (car/lrange (trip-positions-key trip) 0 -1)))
+(defn last-updated [trip] 
+  (or 
+    (redis/wcar* (car/get (redis-last-updated-key trip)))
+    (t/epoch)))
+
+(defn fetch-all [trip]
+  (redis/wcar* (car/lrange (redis-key trip) 0 -1)))
 
 (def validations {:lat [v/required v/number] 
                   :lon [v/required v/number]
-                  :instant [v/required]})
+                  :order [v/required]})
 
 (defn validate [position]
   (first (b/validate position validations)))
 
 (defn add [trip position]
-  (redis/wcar* (car/lpush (trip-positions-key trip) position)))
+  (redis/wcar*
+    (car/lpush (redis-key trip) position)
+    (car/set (redis-last-updated-key trip) (t/now))))
 

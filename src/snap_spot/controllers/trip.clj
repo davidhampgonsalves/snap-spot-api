@@ -4,7 +4,6 @@
     [compojure.route :as route :only [files not-found]]
     [compojure.core :only [defroutes GET POST DELETE ANY context]])
   (:require 
-    [snap-spot.redis :as redis]
     [taoensso.carmine :as car :refer (wcar)]
     [taoensso.timbre :as timbre]
     [bouncer.core :as b]
@@ -25,25 +24,36 @@
    :secret (helper/generate-uuid) 
    :start (t/now)})
 
-(def create-param-validations [:id :secret :start :duration]) 
 (defn create [req]
   "creates a new trip and returns the secret which is required for updating."
   (let [trip (params->trip (:params req))
         errors (trip/validate trip)]
     (if (nil? errors)
-      (do (trip/persist trip)
+      (do (trip/create trip)
         (json/write-str {:secret (:secret trip)}))
       (helper/error-response errors))))
 
-(def update-param-validations [:id :secret :duration])
+(v/defvalidator duration-range-validator
+  "validate duration range is valid"
+  {:default-message-format "duration must be between 0-120"}
+  [duration]
+  (and (>= duration 0) (<= duration 120)))
 
-(comment "enforce duration range")
+(def update-param-validations {:id [v/required v/number] 
+                               :secret [v/required]
+                               :duration [v/required v/number duration-range-validator]})
+
 (defn update [req]
-  "update trip duration(the only updatable attr)"
-   (let [p (:params req)
-        errors (b/validate p update-param-validations)]
-     (if-let [trip (trip/fetch (:id p))]
-       (do
-         (trip/update (assoc trip :duration (:duration p)))
-         (helper/success-response "trip updated"))         
-       (helper/error-response "trip not found"))))
+  "update trip(duration) after validating secret/active"
+  (let [p (:params req)
+        errors (first (b/validate p update-param-validations))]
+    (if-not (nil? errors)
+      (helper/error-response errors)
+      (let [existing-trip (trip/fetch (:id p))]
+        (try
+          (trip/valid-or-throw existing-trip) (comment "ensure trip is active")
+          (trip/valid-or-throw p)
+          (trip/update p) 
+          (info "trip " (trip/redis-key p) " was updated.")
+          (helper/success-response "trip updated")
+          (catch Exception e (helper/error-response (.getMessage e))))))))
