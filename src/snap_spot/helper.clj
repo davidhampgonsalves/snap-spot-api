@@ -13,6 +13,10 @@
   "create json success message"
   (json/write-str {:success msg}))
 
+(defn success-response-with-data [data msg] 
+  "create json success message"
+  (json/write-str (assoc data :success msg)))
+
 (defn throw-exception [msg]
   (throw (Exception. msg)))
 

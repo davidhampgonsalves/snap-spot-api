@@ -3,15 +3,11 @@
             [snap-spot.core :refer :all]
             [ring.mock.request :as mock]
             [snap-spot.helper :as helper]
+            [snap-spot.helpers.trip-helper :as trip-helper]
             [snap-spot.controllers 
              (position :as position)
              (trip :as trip)]
             [clojure.data.json :as json]))
-
-(defn create-trip []
-  (let[trip {:id (helper/generate-uuid) :duration "30"}
-       trip-resp (trip/create {:params trip})]
-       (assoc trip :secret (:secret (json/read-str trip-resp :key-fn keyword)))))
 
 (deftest test-params->position
   (testing "create position from params"
@@ -23,7 +19,7 @@
 
 (deftest test-add
   (testing "add position"
-    (def trip (create-trip))
+    (def trip (trip-helper/create))
     (def resp (position/add {:params {:id (:id trip) 
                                        :secret (:secret trip) 
                                        :lat "22" 
@@ -33,7 +29,7 @@
 
 (deftest test-add-validation
   (testing "add position validation"
-    (def trip (create-trip))
+    (def trip (trip-helper/create))
     (testing "- lat is a number"
       (let [resp (position/add {:params {:id (:id trip) 
                                          :secret (:secret trip) 
@@ -51,6 +47,7 @@
         (is (contains? (json/read-str resp) "error"))))
 
     (testing "- success"
+      (println trip)
       (let [resp (position/add {:params {:id (:id trip) 
                                          :secret (:secret trip) 
                                          :lat "22" 

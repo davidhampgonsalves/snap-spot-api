@@ -20,6 +20,12 @@
     (def trip (json/read-str (controller/create {:params {:id 2 :duration 30}})))
     (is (contains? trip "secret"))))
 
+(deftest test-create-duplicate
+  (testing "controller/create duplicate trip"
+    (controller/create {:params {:id 2 :duration 30}})
+    (def error (json/read-str (controller/create {:params {:id 2 :duration 30}})))
+    (is (contains? error "error"))))
+
 (deftest test-create-bad-duration
   (testing "controller/create bad duration"
     (def error (json/read-str (controller/create {:params {:id 3 :duration -30}})))
@@ -37,7 +43,7 @@
       (is (contains? error "errors")))))
 
 (deftest test-update
-  (testing "controller/update invalid duration test"
+  (testing "controller/update duration test"
     (def trip (json/read-str (controller/create {:params {:id 5 :duration 15}}) :key-fn keyword))
 
     (testing "- success"
@@ -55,14 +61,15 @@
 (deftest test-valid
   (testing "controller/valid-or-throw"
     (let [trip (helper/create)
+          trip-inactive (helper/create :duration (/ 1 60))
           trip-bad-secret (assoc trip :secret 1)
-          trip-inactive (assoc trip :duration 0)
           trip-does-not-exist (assoc trip :id 1)]
       (testing "nil trip throws"
         (is (thrown-with-msg? Exception #"nil" (model/valid-or-throw nil))))
       (testing "trip invalid secret throws"
         (is (thrown-with-msg? Exception #"invalid secret" (model/valid-or-throw trip-bad-secret))))
       (testing "trip not active throws"
+        (Thread/sleep 1200)
         (is (thrown-with-msg? Exception #"does not exist" (model/valid-or-throw trip-inactive))))
       (testing "trip does not exist"
         (is (thrown-with-msg? Exception #"does not exist" (model/valid-or-throw trip-does-not-exist)))))))

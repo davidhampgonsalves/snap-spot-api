@@ -14,7 +14,7 @@
     (let [[index all-keys] (redis/wcar* (car/scan index))]
       (doseq [trip-key all-keys]
         (if (trip/key? trip-key)
-          (trip/delete-if-expired trip-key)))
+          (trip/delete-if-aged trip-key)))
       (if-not (= index "0")
         (recur index)))))
 
