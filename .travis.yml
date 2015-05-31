@@ -1,6 +1,0 @@
-language: clojure
-jdk: 
-  - oraclejdk8
-
-services:
-  - redis-server
