@@ -2,25 +2,27 @@ i<!DOCTYPE html>
 <html>
   <head>
     <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAdmcHXRQve3WoQQiY8_xuJZdciCCX9nwg"></script>
-  </head>
-  <body>
-    <div id="map-canvas"></div>
     <style type="text/css">
       html, body, #map-canvas { height: 100%; margin: 0; padding: 0;}
     </style>
-
+  </head>
+  <body>
+    <div id="map-canvas"></div>
     <script type="text/javascript">
 
 google.maps.event.addDomListener(window, 'load', function() {
   var view = new TripView();
   var trip = new Trip(view);
 
-  //spoof some positions
-  window.setInterval(function() {
-    lat = -34.1 + (Math.random()/10)
-    lon = 150.1 + (Math.random()/10);
-    trip.listenForPositions(new google.maps.LatLng(lat, lon));
-  }, 1000)
+  var tripId = window.location.hash;
+  if(!tripId || tripId.substring(0,1) != "#") {
+    console.log("trip not set")
+    return;
+  }
+
+  tripId = tripId.substring(1)
+  var tripSocket = new WebSocket("ws://192.241.229.86:9000/position/subscribe/" + tripId);
+  tripSocket.onmessage = trip.listenForPositions.bind(trip); 
 });
 
 var Trip = function Trip(view) {
@@ -28,9 +30,10 @@ var Trip = function Trip(view) {
   this.positions = [];
 }
 
-Trip.prototype.listenForPositions = function listenForPositions(pos) {
- this.positions.push(pos); 
- this.view.draw(this.positions);
+Trip.prototype.listenForPositions = function listenForPositions(event) {
+  var pos = JSON.parse(event.data);
+  this.positions.push(new google.maps.LatLng(pos.lat, pos.lon)); 
+  this.view.draw(this.positions);
 }
 
 var TripView = function TripView() {
@@ -89,8 +92,6 @@ TripView.prototype.animate = function animate(positions, animationStart) {
   if(progress < 1)
     this.lastAnimation = window.requestAnimationFrame(this.animate.bind(this, positions, animationStart));
 }
-
-
     </script>
   </body>
 </html>
