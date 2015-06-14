@@ -36,6 +36,5 @@ ADD docker/newrelic-plugin-agent.cfg /etc/newrelic/
 
 ADD . /app/
 
-
 # Use baseimage-docker's init system.
 CMD ["/sbin/my_init"]
