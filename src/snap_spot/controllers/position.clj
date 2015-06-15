@@ -25,7 +25,8 @@
 (defn send-past-positions [channel params]
   "send all past positions to websocket channel"
   (def positions (position/fetch-all params))
-  (doseq [p (sort-by :instant > positions)] (send-position channel p)))
+  (println positions)
+  (doseq [p (sort-by :order > positions)] (send-position channel p)))
 
 (defn params->position [params]
   "turn url params into a position"
