@@ -7,6 +7,7 @@
             [snap-spot.controllers 
              (position :as position)
              (trip :as trip)]
+            [snap-spot.models.position :as position-model]
             [clojure.data.json :as json]))
 
 (deftest test-params->position
@@ -25,7 +26,26 @@
                                        :lat "22" 
                                        :lon "24" 
                                        :order "1"}}))
-    (test (is (contains? (json/read-str resp) "success")))))
+    (test (is (contains? (json/read-str resp) "success"))))
+  
+  (testing "add positions"
+    (def trip (trip-helper/create))
+    (def resp1 (position/add {:params {:id (:id trip) 
+                                       :secret (:secret trip) 
+                                       :lat "22.1231243234234" 
+                                       :lon "24.1239348398459348" 
+                                       :order "1"}}))
+    (test (is (contains? (json/read-str resp1) "success"))))
+    (Thread/sleep 2000)
+    (def resp2 (position/add {:params {:id (:id trip) 
+                                       :secret (:secret trip) 
+                                       :lat "22.1231231231231" 
+                                       :lon "24.12313123123123" 
+                                       :order "2"}}))
+    (test (is (contains? (json/read-str resp2) "success")))
+
+    (def positions (position-model/fetch-all trip))
+    (test (is (= (count positions) 2))))
 
 (deftest test-add-validation
   (testing "add position validation"

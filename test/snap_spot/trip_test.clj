@@ -45,7 +45,6 @@
 (deftest test-update
   (testing "controller/update duration test"
     (def trip (json/read-str (controller/create {:params {:id 5 :duration 15}}) :key-fn keyword))
-
     (testing "- success"
       (let [res (json/read-str (controller/update {:params {:id 5 :secret (:secret trip) :duration 120}}))]
         (is (contains? res "success"))))
