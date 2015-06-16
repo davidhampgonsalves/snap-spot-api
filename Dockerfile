@@ -26,16 +26,14 @@ RUN lein install
 #need to add init scripts for lein run and nginx and cron for task
 
 RUN nrsysmond-config --set license_key=cc10e2214fa2d6344e678152458db27623d46bb8 \
-  && mkdir /etc/service/app /etc/service/redis /etc/service/new-relic \
+  && mkdir /etc/service/app /etc/service/redis \
   && mkdir /var/run/newrelic
 
 ADD docker/app.sh /etc/service/app/run
 ADD docker/redis.sh /etc/service/redis/run
-ADD docker/new-relic.sh /etc/service/new-relic/run
 ADD docker/newrelic-plugin-agent.cfg /etc/newrelic/
 
 ADD . /app/
-
 
 # Use baseimage-docker's init system.
 CMD ["/sbin/my_init"]
