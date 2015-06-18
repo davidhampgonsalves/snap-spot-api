@@ -1,7 +1,7 @@
 i<!DOCTYPE html>
 <html>
   <head>
-    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAdmcHXRQve3WoQQiY8_xuJZdciCCX9nwg"></script>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=geometry&key=AIzaSyAdmcHXRQve3WoQQiY8_xuJZdciCCX9nwg"></script>
     <style type="text/css">
       html, body, #map-canvas { height: 100%; margin: 0; padding: 0;}
     </style>
@@ -32,6 +32,7 @@ var Trip = function Trip(view) {
 
 Trip.prototype.listenForPositions = function listenForPositions(event) {
   var pos = JSON.parse(event.data);
+  console.info(event.data)
   this.positions.push(new google.maps.LatLng(pos.lat, pos.lon)); 
   this.view.draw(this.positions);
 }
@@ -62,6 +63,9 @@ TripView.prototype.listenForUserInteraction = function listenForUserInteraction(
 }
 
 TripView.prototype.draw = function draw(positions) {
+  positions = positions.sort(function(a, b) {
+    return a.order > b.order;
+  });
   window.cancelAnimationFrame(this.lastAnimationFrame);
   this.animate(positions);
 }
