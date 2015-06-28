@@ -3,8 +3,7 @@
             [snap-spot.core :refer :all]
             [snap-spot.models.trip :as model]
             [snap-spot.helpers
-              (test-helper :as test-helper)
-              (trip-helper :as helper)]
+              (test-helper :as test-helper)]
             [ring.mock.request :as mock]
             [snap-spot.controllers.trip :as controller]
             [clojure.data.json :as json]))
@@ -57,8 +56,8 @@
 
 (comment deftest test-valid
   (testing "controller/errors"
-    (let [trip (helper/create)
-          expired-trip (helper/create :remaining-minutes 0)
+    (let [trip (test-helper/create-trip)
+          expired-trip (test-helper/create-trip :remaining-minutes 0)
           err-expired (model/update expired-trip)
           err-bad-secret (model/update (assoc trip :secret 1))
           err-does-not-exist (model/update (assoc trip :id 1))]

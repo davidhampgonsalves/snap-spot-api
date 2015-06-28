@@ -3,7 +3,7 @@
             [snap-spot.core :refer :all]
             [ring.mock.request :as mock]
             [snap-spot.helper :as helper]
-            [snap-spot.helpers.trip-helper :as trip-helper]
+            [snap-spot.helpers.test-helper :as test-helper]
             [snap-spot.controllers 
              (position :as position)
              (trip :as trip)]
@@ -19,7 +19,7 @@
 
 (deftest test-add
   (testing "add position"
-    (def trip (trip-helper/create))
+    (def trip (test-helper/create-trip))
     (def resp (position/add {:params {:id (:id trip) 
                                        :secret (:secret trip) 
                                        :lat "22" 
@@ -27,7 +27,7 @@
     (test (is (contains? (json/read-str resp) "success"))))
   
   (testing "add positions"
-    (def trip (trip-helper/create))
+    (def trip (test-helper/create-trip))
     (def resp1 (position/add {:params {:id (:id trip) 
                                        :secret (:secret trip) 
                                        :lat "22.1231243234234" 
@@ -45,7 +45,7 @@
 
 (deftest test-add-validation
   (testing "add position validation"
-    (def trip (trip-helper/create))
+    (def trip (test-helper/create-trip))
     (testing "- lat is a number"
       (let [resp (position/add {:params {:id (:id trip) 
                                          :secret (:secret trip) 
