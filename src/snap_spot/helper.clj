@@ -5,9 +5,9 @@
     [clj-time.core :as t]
     [clojure.data.json :as json]))
 
-(defn error-response [error] 
+(defn error-response [errors] 
   "create json error message"
-  (json/write-str {:error error}))
+  (json/write-str {:errors errors}))
 
 (defn success-response [msg] 
   "create json success message"

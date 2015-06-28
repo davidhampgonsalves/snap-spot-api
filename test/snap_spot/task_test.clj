@@ -23,4 +23,5 @@
       (is (not (nil? (trip/fetch 5)))))
 
     (testing "was expired trip deleted"
-      (is (nil? (trip/fetch 4))))))
+      (let [[err trip] (trip/fetch 4)]
+        (is (nil? trip))))))

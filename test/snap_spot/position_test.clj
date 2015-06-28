@@ -12,11 +12,10 @@
 
 (deftest test-params->position
   (testing "create position from params"
-    (def position (position/params->position {:lat "1.1" :lon "2" :order "1"}))
+    (def position (position/params->position {:lat "1.1" :lon "2"}))
     (is (and 
           (= (:lat position) 1.1M)
-          (= (:lon position) 2M)
-          (= (:order position) 1M)))))
+          (= (:lon position) 2M)))))
 
 (deftest test-add
   (testing "add position"
@@ -24,8 +23,7 @@
     (def resp (position/add {:params {:id (:id trip) 
                                        :secret (:secret trip) 
                                        :lat "22" 
-                                       :lon "24" 
-                                       :order "1"}}))
+                                       :lon "24"}}))
     (test (is (contains? (json/read-str resp) "success"))))
   
   (testing "add positions"
@@ -33,15 +31,13 @@
     (def resp1 (position/add {:params {:id (:id trip) 
                                        :secret (:secret trip) 
                                        :lat "22.1231243234234" 
-                                       :lon "24.1239348398459348" 
-                                       :order "1"}}))
+                                       :lon "24.1239348398459348"}}))
     (test (is (contains? (json/read-str resp1) "success"))))
     (Thread/sleep 2000)
     (def resp2 (position/add {:params {:id (:id trip) 
                                        :secret (:secret trip) 
                                        :lat "22.1231231231231" 
-                                       :lon "24.12313123123123" 
-                                       :order "2"}}))
+                                       :lon "24.12313123123123"}}))
     (test (is (contains? (json/read-str resp2) "success")))
 
     (def positions (position-model/fetch-all trip))
@@ -54,23 +50,19 @@
       (let [resp (position/add {:params {:id (:id trip) 
                                          :secret (:secret trip) 
                                          :lat "22a" 
-                                         :lon "24" 
-                                         :order "1"}})]
-        (is (contains? (json/read-str resp) "error"))))
+                                         :lon "24"}})]
+        (is (contains? (json/read-str resp) "errors"))))
     
     (testing "- secret validation"
       (let [resp (position/add {:params {:id (:id trip) 
                                          :secret "abc" 
                                          :lat "22" 
-                                         :lon "24" 
-                                         :order "1"}})]
-        (is (contains? (json/read-str resp) "error"))))
+                                         :lon "24"}})]
+        (is (contains? (json/read-str resp) "errors"))))
 
     (testing "- success"
-      (println trip)
       (let [resp (position/add {:params {:id (:id trip) 
                                          :secret (:secret trip) 
                                          :lat "22" 
-                                         :lon "24" 
-                                         :order "1"}})]
+                                         :lon "24"}})]
         (is (contains? (json/read-str resp) "success"))))))

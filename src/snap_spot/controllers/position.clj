@@ -12,11 +12,18 @@
     [clojure.data.json :as json]
     [me.shenfeng.mustache :as mustache]
     [snap-spot.helper :as helper]
+    [snap-spot.controllers.trip :as trip]
     [snap-spot.models 
-     (position :as position)
-     (trip :as trip)]))
+     (position :as position)]))
 
 (timbre/refer-timbre)
+
+(defn params->position [params]
+  "turn url params into a position"
+  (def attrs [:lat :lon])
+  (-> params 
+    (select-keys attrs)
+    (helper/values->numbers attrs)))
 
 (defn send-position [channel position]
   "send postion to websocket channel"
@@ -25,15 +32,7 @@
 (defn send-past-positions [channel params]
   "send all past positions to websocket channel"
   (def positions (position/fetch-all params))
-  (println positions)
-  (doseq [p (sort-by :order > positions)] (send-position channel p)))
-
-(defn params->position [params]
-  "turn url params into a position"
-  (def attrs [:lat :lon :order])
-  (-> params 
-    (select-keys attrs)
-    (helper/values->numbers attrs)))
+  (doseq [p positions] (send-position channel p)))
 
 (defn subscribe-to-redis [channel trip-id]
   "subscribe to redis sub/pub for a trip and push to websocket channel"
@@ -53,25 +52,15 @@
     (subscribe-to-redis channel (:id params))
     (send-past-positions channel params)))
 
-(defn save-new-position [trip position]
-  (redis/wcar*
-    (if (> (trip/seconds-since-update trip) 1)
-      (position/add trip position)
-      (info "position not writen to db since last update was too recent"))
-    (car/publish (:id trip) position)))
-
-(def add-param-validations (helper/generate-required-validations [:id :secret :lat :lon :order])) 
+(def add-param-validations (helper/generate-required-validations [:id :secret :lat :lon])) 
 (defn add [req] 
   "add position to a trip"
-  (let [p (:params req)
-        position (params->position p)
-        errors (helper/validate-all [[p add-param-validations] 
-                                     [position position/validations]])]
-    (if errors
-      (helper/error-response errors) 
-      (let [trip (trip/fetch (:id p))]
-        (try
-          (trip/valid-or-throw p)
-          (save-new-position trip position)
-          (helper/success-response "position added")
-          (catch Exception e (helper/error-response (.getMessage e))))))))
+  (let [params (:params req)
+        trip (trip/params->trip params)
+        position (params->position params)
+        errs (position/add trip position)]
+    (if-not (empty? errs)
+      (helper/error-response errs) 
+      (do
+        (redis/wcar* (car/publish (:id trip) position))
+        (helper/success-response "trip updated")))))
