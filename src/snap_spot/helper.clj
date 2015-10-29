@@ -9,13 +9,12 @@
   "create json error message"
   (json/write-str {:errors errors}))
 
-(defn success-response [msg] 
+(defn success-response 
+  [msg & {:keys [data] or {data (hash-map)}}] 
   "create json success message"
-  (json/write-str {:success msg}))
-
-(defn success-response-with-data [data msg] 
-  "create json success message"
-  (json/write-str (assoc data :success msg)))
+  {:status 200 
+   :headers {"Content-Type" "application/json"} 
+   :body (json/write-str (assoc data :success msg))})
 
 (defn throw-exception [msg]
   (throw (Exception. msg)))

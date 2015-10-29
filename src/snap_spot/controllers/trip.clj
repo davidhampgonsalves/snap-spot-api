@@ -28,9 +28,9 @@
   "creates a new trip and returns the secret which is required for updating."
   (let [trip (params->trip (:params req))
         errs (trip/create trip)]
-      (if (empty? errs)
-        (helper/success-response-with-data {:secret (:secret trip)} "trip created.")
-        (helper/error-response errs))))
+    (if (empty? errs)
+      (helper/success-response "trip created." :data {:secret (:secret trip)})
+      (helper/error-response errs))))
 
 (defn update [req]
   "update trip(duration) after validating secret"
