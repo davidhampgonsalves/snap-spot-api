@@ -4,7 +4,6 @@
             [snap-spot.models.trip :as model]
             [snap-spot.helpers
               (test-helper :as test-helper)]
-            [ring.mock.request :as mock]
             [snap-spot.controllers.trip :as controller]
             [clojure.data.json :as json]))
 
@@ -12,47 +11,56 @@
 
 (deftest test-params->trip
   (testing "params->trip"
-    (is (= 1M (:remaining-minutes (controller/params->trip {:id "1" :remaining-minutes "1"}))))))
+    (is (= 1 (:remaining-minutes (controller/params->trip {:id "1" :remaining-minutes "1"}))))))
 
 (deftest test-create
   (testing "controller/create valid"
-    (def trip (json/read-str (controller/create {:params {:id 2 :remaining-minutes 30}})))
-    (is (contains? trip "secret"))))
+    (def trip (controller/create {:params {:id 2 :remaining-minutes 30}}))
+    (is (contains? (test-helper/response-json trip) "secret"))))
 
 (deftest test-create-duplicate
   (testing "controller/create duplicate trip"
     (controller/create {:params {:id 2 :remaining-minutes 30}})
-    (def error (json/read-str (controller/create {:params {:id 2 :remaining-minutes 30}})))
-    (is (contains? error "errors"))))
+    (def error (controller/create {:params {:id 2 :remaining-minutes 30}}))
+    (is (contains? (test-helper/response-json error) "errors"))))
 
 (deftest test-create-bad-remaining-minutes
   (testing "controller/create bad remaining-minutes"
-    (def error (json/read-str (controller/create {:params {:id 3 :remaining-minutes -30}})))
-    (is (contains? error "errors"))))
+    (def error (controller/create {:params {:id 3 :remaining-minutes -30}}))
+    (is (contains? (test-helper/response-json error) "errors"))))
 
 (deftest test-create-no-remaining-minutes
   (testing "controller/create no remaining-minutes error test"
-    (def error (json/read-str (controller/create {:params {:id 4}})))
-    (is (contains? error "errors"))))
+    (def error (controller/create {:params {:id 4}}))
+    (is (contains? (test-helper/response-json error) "errors"))))
+
+(deftest test-delete
+  (testing "controller/delete"
+    (def trip (test-helper/create-trip))
+    (testing "- success"
+      (let [res (controller/delete {:params {:id (:id trip) :secret (:secret trip)}})]
+        (is (contains? (test-helper/response-json res) "success"))))
+    (testing "- was deleted"
+      (is (empty (model/fetch trip))))))
 
 (deftest test-update
   (testing "controller/update remaining-minutes test"
-    (def trip (json/read-str (controller/create {:params {:id 5 :remaining-minutes 15}}) :key-fn keyword))
+    (def trip (test-helper/create-trip :id 5))
     (testing "- success"
-      (let [res (json/read-str (controller/update {:params {:id 5 :secret (:secret trip) :remaining-minutes 120}}))]
-        (is (contains? res "success"))))
+      (let [res (controller/update {:params {:id 5 :secret (:secret trip) :remaining-minutes 120}})]
+        (is (contains? (test-helper/response-json res) "success"))))
 
     (testing "- invalid secret test"
-      (let [error (json/read-str (controller/update {:params {:id 5 :secret "abc" :remaining-minutes 120}}))]
-        (is (contains? error "errors"))))
+      (let [error (controller/update {:params {:id 5 :secret "abc" :remaining-minutes 120}})]
+        (is (contains? (test-helper/response-json error) "errors"))))
 
     (testing "- too long"
-      (let [error (json/read-str (controller/update {:params {:id 5 :secret (:secret trip) :remaining-minutes 130}}))]
-        (is (contains? error "errors"))))
+      (let [error (controller/update {:params {:id 5 :secret (:secret trip) :remaining-minutes 130}})]
+        (is (contains? (test-helper/response-json error) "errors"))))
 
     (testing "- negative"
-      (let [error (json/read-str (controller/update {:params {:id 5 :secret (:secret trip) :remaining-minutes -1}}))]
-        (is (contains? error "errors"))))))
+      (let [error (controller/update {:params {:id 5 :secret (:secret trip) :remaining-minutes -1}})]
+        (is (contains? (test-helper/response-json error) "errors"))))))
 
 (comment deftest test-valid
   (testing "controller/errors"

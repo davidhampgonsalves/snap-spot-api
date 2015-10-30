@@ -35,25 +35,27 @@
 (defn create [trip]
   "write trip to redis"
   (let [errs (validate trip)]
-    (comment "TODO: cleanup this chain of ifs")
-    (if (empty? errs)
-      (if (= 1 (redis/wcar* (car/setnx (redis-key trip) (dissoc trip :remaining-minutes))))
+    (if-not (empty? errs)
+      errs
+      (if (= 0 (redis/wcar* (car/setnx (redis-key trip) (dissoc trip :remaining-minutes))))
+        ["trip already exists."]
         (do
-          (redis/wcar* (car/expire (redis-key trip) (.intValue (* (:remaining-minutes trip) 60))))
-          nil)
-        ["trip already exists."])
-      errs)))
+          (redis/wcar* (car/expire (redis-key trip) (* (:remaining-minutes trip) 60)))
+          nil)))))
 
 (comment "TODO: need to expire the positions as well")
 (defn update [params]
   "update a trip based on its id/secret and return errors, allow remining time to be extended indefinately \\
-  , if trip is really old(more then a day) it will be destroyed by task anyway"
+  , if trip is really old(more then a day) it will be destroyed by cleanup task anyway"
   (let [[errs trip] (fetch params)]
-    (if (empty? errs)
-      (let [updated-trip (assoc trip :remaining-minutes (helper/str->number (:remaining-minutes params)))
+    (if-not (empty? errs)
+      errs
+      (let [remaining-minutes (helper/str->int (:remaining-minutes params))
+            updated-trip (assoc trip :remaining-minutes remaining-minutes)
             errs (concat errs (validate updated-trip))]
-        (if (or (not (empty? errs)) (= 0 (redis/wcar* (car/expire (redis-key trip) (params :remaining-minutes)))))
+        (if-not (empty? errs)
           errs
-          []))
-      errs)))
+          (do 
+            (redis/wcar* (car/expire (redis-key trip) (* remaining-minutes 60)))
+            nil))))))
 

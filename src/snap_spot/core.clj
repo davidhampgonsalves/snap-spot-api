@@ -19,13 +19,15 @@
 (mustache/deftemplate index-template (slurp "templates/index.tpl"))
 
 (defroutes all-routes
-  (context "/position" [] 
-    (POST "/add/:id" [] position/add)
-    (GET "/subscribe/:id" [] position/subscribe))
-  (context "/trip" []
-    (POST "/create/:id" [] trip/create)
-    (PUT "/update/:id" [] trip/update))
-  (GET "/:id" [] (index-template {:title "SS"}))
+  
+  (context "/v1/trips/:id" []
+    (POST "/" [] trip/create)
+    (PUT  "/" [] trip/update)
+    (DELETE "/" [] trip/delete)
+    (context "/positions" [] 
+      (POST "/" [] position/add)
+      (GET "/subscribe" [] position/subscribe)))
+  (GET "/trips/:id" [] (index-template {:title "SS"}))
   (route/not-found "<p>BORK!</p>")) ;; all other, return 404
 
 (defn in-dev? [args] true)

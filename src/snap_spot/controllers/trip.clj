@@ -20,7 +20,7 @@
 (defn params->trip [p]
   "build a trip map from request params"
   {:id (:id p) 
-   :remaining-minutes (helper/str->number (:remaining-minutes p)) 
+   :remaining-minutes (helper/str->int (:remaining-minutes p)) 
    :secret (if (contains? p :secret) (:secret p) (helper/generate-uuid))
    :start (t/now)})
 
@@ -35,6 +35,13 @@
 (defn update [req]
   "update trip(duration) after validating secret"
   (let [errs (trip/update (:params req))]
-    (if (empty? errs)
+    (if (nil? errs)
       (helper/success-response "trip updated")
+      (helper/error-response errs))))
+
+(defn delete [req]
+  "delete trip by expiring it"
+  (let [errs (trip/update (assoc (:params req) :remaining-minutes 0))]
+    (if (nil? errs)
+      (helper/success-response "trip deleted")
       (helper/error-response errs))))

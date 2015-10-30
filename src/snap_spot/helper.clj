@@ -7,7 +7,9 @@
 
 (defn error-response [errors] 
   "create json error message"
-  (json/write-str {:errors errors}))
+  {:status 400 
+   :headers {"Content-Type" "application/json"} 
+   :body (json/write-str {:errors errors})})
 
 (defn success-response 
   [msg & {:keys [data] or {data (hash-map)}}] 
@@ -22,9 +24,14 @@
 (defn generate-uuid []
   (str (java.util.UUID/randomUUID)))
 
-(defn str->number [v]
-  "convert string to "
-  (try (bigdec v) (catch Exception e v)))
+(defn str->number [s]
+  "convert string to number"
+  (try (bigdec s) (catch Exception e s)))
+
+(defn str->int [s]
+  (if-let [number (str->number s)]
+    (.intValue number)
+    nil))
 
 (defn values->numbers [m keys]
   (reduce (fn [r [k v]] (assoc r k (str->number v))) {} m))
