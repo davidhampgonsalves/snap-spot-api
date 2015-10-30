@@ -7,7 +7,7 @@
     [bouncer.core :as b]
     [bouncer.validators :as v]
     [clojure.data.json :as json]
-    [snap-spot.models.position :as position :only delete]))
+    [snap-spot.models.position :as position :only schedule-expiry]))
 
 (timbre/refer-timbre)
 
@@ -31,7 +31,6 @@
       [["trip not found."], nil]
       [[], trip])))
 
-(comment "TODO: need to expire the positions as well")
 (defn create [trip]
   "write trip to redis"
   (let [errs (validate trip)]
@@ -43,7 +42,6 @@
           (redis/wcar* (car/expire (redis-key trip) (* (:remaining-minutes trip) 60)))
           nil)))))
 
-(comment "TODO: need to expire the positions as well")
 (defn update [params]
   "update a trip based on its id/secret and return errors, allow remining time to be extended indefinately \\
   , if trip is really old(more then a day) it will be destroyed by cleanup task anyway"
@@ -57,5 +55,6 @@
           errs
           (do 
             (redis/wcar* (car/expire (redis-key trip) (* remaining-minutes 60)))
+            (position/schedule-expiry trip)
             nil))))))
 
