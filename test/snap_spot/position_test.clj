@@ -24,7 +24,7 @@
                                        :secret (:secret trip) 
                                        :lat "22" 
                                        :lon "24"}}))
-    (test (is (contains? (json/read-str resp) "success"))))
+    (test (is (contains? (test-helper/response-json resp) "success"))))
   
   (testing "add positions"
     (def trip (test-helper/create-trip))
@@ -32,13 +32,13 @@
                                        :secret (:secret trip) 
                                        :lat "22.1231243234234" 
                                        :lon "24.1239348398459348"}}))
-    (test (is (contains? (json/read-str resp1) "success"))))
+    (test (is (contains? (test-helper/response-json resp1) "success"))))
     (Thread/sleep 2000)
     (def resp2 (position/add {:params {:id (:id trip) 
                                        :secret (:secret trip) 
                                        :lat "22.1231231231231" 
                                        :lon "24.12313123123123"}}))
-    (test (is (contains? (json/read-str resp2) "success")))
+    (test (is (contains? (test-helper/response-json resp2) "success")))
 
     (def positions (position-model/fetch-all trip))
     (test (is (= (count positions) 2))))
@@ -51,18 +51,18 @@
                                          :secret (:secret trip) 
                                          :lat "22a" 
                                          :lon "24"}})]
-        (is (contains? (json/read-str resp) "errors"))))
+        (is (contains? (test-helper/response-json resp) "errors"))))
     
     (testing "- secret validation"
       (let [resp (position/add {:params {:id (:id trip) 
                                          :secret "abc" 
                                          :lat "22" 
                                          :lon "24"}})]
-        (is (contains? (json/read-str resp) "errors"))))
+        (is (contains? (test-helper/response-json resp) "errors"))))
 
     (testing "- success"
       (let [resp (position/add {:params {:id (:id trip) 
                                          :secret (:secret trip) 
                                          :lat "22" 
                                          :lon "24"}})]
-        (is (contains? (json/read-str resp) "success"))))))
+        (is (contains? (test-helper/response-json resp) "success"))))))
