@@ -19,7 +19,6 @@
 (mustache/deftemplate index-template (slurp "templates/index.tpl"))
 
 (defroutes all-routes
-  
   (context "/v1/trips/:id" []
     (POST "/" [] trip/create)
     (PUT  "/" [] trip/update)
@@ -28,9 +27,7 @@
       (POST "/" [] position/add)
       (GET "/subscribe" [] position/subscribe)))
   (GET "/trips/:id" [] (index-template {:title "SS"}))
-  (route/not-found "<p>BORK!</p>")) ;; all other, return 404
-
-(defn in-dev? [args] true)
+  (route/not-found "{errors: ['route does not exist']}")) ;; all other, return 404
 
 (defonce server (atom nil))
 (defn stop-server []
@@ -39,8 +36,12 @@
     (reset! server nil)))
 
 (def site 
-  (-> (wrap-defaults all-routes (assoc-in api-defaults [:params] {:keywordize true, :urlencoded true}))
+  (-> 
+    (wrap-defaults all-routes (assoc-in api-defaults [:params] {:keywordize true, :urlencoded true}))
     wrap-json-params))
+
+(comment "TODO: check env variable or something")
+(defn in-dev? [args] true)
 
 (defn -main [& args]
   (let [routes (if (in-dev? args)
